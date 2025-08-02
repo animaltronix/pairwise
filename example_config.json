@@ -1,0 +1,10 @@
+{
+  "parameters": {
+    "Browser": ["Chrome", "Firefox", "Safari", "Edge"],
+    "Operating System": ["Windows 10", "Windows 11", "macOS", "Ubuntu"],
+    "Screen Resolution": ["1920x1080", "1366x768", "2560x1440", "3840x2160"],
+    "Network Speed": ["Fast", "Slow", "Offline"],
+    "User Type": ["Admin", "Regular User", "Guest"]
+  },
+  "description": "Example configuration for cross-browser testing with different system configurations"
+} 
