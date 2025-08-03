@@ -40,7 +40,7 @@ class ConstraintBuilder:
             value1: Value for comparison (if applicable)
             action_parameter: Parameter for the action
             must_option: must or must not
-            nil_option: be nil or not be nil
+            nil_option: be nil, not be nil, or a specific value
             
         Returns:
             Constraint object
@@ -52,7 +52,13 @@ class ConstraintBuilder:
             condition = f"{parameter1} {ConstraintBuilder.OPERATORS[operator]} '{value1}'"
         
         # Build action
-        action_text = f"{action_parameter} {must_option} {nil_option}"
+        # Check if nil_option is a standard nil option or a specific value
+        if nil_option in ConstraintBuilder.NIL_OPTIONS:
+            # Standard nil option
+            action_text = f"{action_parameter} {must_option} {nil_option}"
+        else:
+            # Specific value (like "AAX", "Logic", etc.)
+            action_text = f"{action_parameter} {must_option} be {nil_option}"
         
         return Constraint(condition, action_text)
     

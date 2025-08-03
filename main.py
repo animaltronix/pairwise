@@ -275,7 +275,7 @@ class PairwiseTestingApp:
         stats_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Statistics labels
-        self.total_combinations_var = tk.StringVar(value="Total combinations: 0")
+        self.total_combinations_var = tk.StringVar(value="Total test cases: 0")
         self.total_pairs_var = tk.StringVar(value="Total pairs: 0")
         
         ttk.Label(stats_frame, textvariable=self.total_combinations_var).grid(row=0, column=0, sticky=tk.W, padx=5)
@@ -335,9 +335,16 @@ class PairwiseTestingApp:
         """Update nil dropdown based on selected action parameter."""
         action_param = self.action_param_var.get()
         if action_param in self.parameters:
-            # For now, we'll use the standard nil options
-            # In the future, this could be customized based on the parameter
-            pass
+            # Get the values for the selected action parameter
+            param_values = self.parameters[action_param]
+            
+            # Combine parameter values with standard nil options
+            nil_options = list(ConstraintBuilder.get_nil_options())
+            nil_options.extend(param_values)
+            
+            # Update the nil dropdown
+            self.nil_combo['values'] = nil_options
+            self.nil_var.set("")  # Clear previous selection
         
     def add_parameter(self):
         """Add a new parameter to the list."""
@@ -488,7 +495,7 @@ class PairwiseTestingApp:
                 total_pairs += len(param_values[i]) * len(param_values[j])
         
         # Update statistics
-        self.total_combinations_var.set(f"Total combinations: {total_combinations}")
+        self.total_combinations_var.set(f"Total test cases: {total_combinations}")
         self.total_pairs_var.set(f"Total pairs: {total_pairs}")
             
     def generate_test_cases(self):

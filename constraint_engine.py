@@ -90,6 +90,69 @@ class ConstraintEngine:
         
         return valid_combinations
     
+    def is_valid_pair(self, pair: Tuple) -> bool:
+        """
+        Check if a single pair is valid according to all constraints.
+        
+        Args:
+            pair: Tuple of ((param1, value1), (param2, value2))
+            
+        Returns:
+            True if the pair is valid, False otherwise
+        """
+        # Convert pair to a minimal test case for evaluation
+        param1, value1 = pair[0]
+        param2, value2 = pair[1]
+        
+        # Create a test case with just these two parameters
+        test_case = {param1: value1, param2: value2}
+        
+        print(f"DEBUG: Checking pair {pair}")
+        print(f"DEBUG: Test case: {test_case}")
+        
+        # Check if this minimal test case violates any constraints
+        for constraint in self.constraints:
+            print(f"DEBUG: Evaluating constraint: {constraint}")
+            
+            # Check if this constraint involves the parameters in our pair
+            condition_params = self._extract_parameters_from_condition(constraint.condition)
+            action_params = self._extract_parameters_from_action(constraint.action)
+            
+            print(f"DEBUG: Condition params: {condition_params}, Action params: {action_params}")
+            print(f"DEBUG: Pair params: {param1}, {param2}")
+            
+            # If constraint involves our pair parameters, evaluate it
+            if param1 in condition_params or param2 in condition_params or param1 in action_params or param2 in action_params:
+                print(f"DEBUG: Constraint involves our pair parameters")
+                constraint_result = self._evaluate_constraint(test_case, constraint)
+                print(f"DEBUG: Constraint result: {constraint_result}")
+                if not constraint_result:
+                    print(f"DEBUG: Pair {pair} is INVALID due to constraint {constraint}")
+                    return False
+            else:
+                print(f"DEBUG: Constraint does not involve our pair parameters")
+        
+        print(f"DEBUG: Pair {pair} is VALID")
+        return True
+    
+    def _extract_parameters_from_condition(self, condition: str) -> Set[str]:
+        """Extract parameter names from a condition string."""
+        # Simple extraction - look for parameter names before operators
+        params = set()
+        words = condition.split()
+        for i, word in enumerate(words):
+            if word in ['=', '!=', 'is', 'not'] and i > 0:
+                params.add(words[i-1])
+        return params
+    
+    def _extract_parameters_from_action(self, action: str) -> Set[str]:
+        """Extract parameter names from an action string."""
+        # Simple extraction - first word is usually the parameter
+        words = action.split()
+        if words:
+            return {words[0]}
+        return set()
+    
     def _evaluate_constraint(self, test_case: Dict[str, str], constraint: Constraint) -> bool:
         """
         Evaluate if a test case satisfies a specific constraint.
@@ -155,18 +218,34 @@ class ConstraintEngine:
     
     def _evaluate_action(self, test_case: Dict[str, str], action: str) -> bool:
         """Evaluate an action string against a test case."""
-        # Simple action evaluation for now
-        # Supports: "parameter must be nil", "parameter must not be nil"
-        
+        # Handle "parameter must be nil"
         if "must be nil" in action.lower():
             param_name = action.split()[0]  # First word is parameter name
             actual_value = test_case.get(param_name, "")
             return actual_value == "" or actual_value is None
         
+        # Handle "parameter must not be nil"
         if "must not be nil" in action.lower():
             param_name = action.split()[0]  # First word is parameter name
             actual_value = test_case.get(param_name, "")
             return actual_value != "" and actual_value is not None
+        
+        # Handle "parameter must be specific_value" (e.g., "Format must be AAX")
+        # Look for pattern like "Format must be AAX" or "DAW must be Logic"
+        action_parts = action.split()
+        if len(action_parts) >= 4 and action_parts[1] == "must" and action_parts[2] == "be":
+            param_name = action_parts[0]
+            required_value = action_parts[3]
+            actual_value = test_case.get(param_name, "")
+            return actual_value == required_value
+        
+        # Handle "parameter must not be specific_value" (e.g., "Format must not be AAX")
+        # Look for pattern like "Format must not be AAX" or "DAW must not be Logic"
+        if len(action_parts) >= 5 and action_parts[1] == "must" and action_parts[2] == "not" and action_parts[3] == "be":
+            param_name = action_parts[0]
+            forbidden_value = action_parts[4]
+            actual_value = test_case.get(param_name, "")
+            return actual_value != forbidden_value
         
         return True
 
